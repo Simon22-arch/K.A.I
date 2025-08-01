@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>K.A.I. – Tu asistente personal</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #0f172a;
+      color: #f1f5f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+    }
+    h1 { font-size: 2.2rem; margin-bottom: 10px; }
+    #response { margin: 20px auto; max-width: 90%; font-size: 1.3rem; }
+    button {
+      background: #3b82f6;
+      color: white;
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>👋 Hola, soy <strong>K.A.I.</strong></h1>
+  <p>Tu asistente inteligente. ¿En qué te ayudo hoy?</p>
+  <button onclick="escuchar()">🎤 Hablar</button>
+
+  <div id="response"></div>
+
+  <script>
+    const apiKey = "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";
+
+    function hablar(texto) {
+      const synth = window.speechSynthesis;
+      const voz = new SpeechSynthesisUtterance(texto);
+      voz.lang = "es-ES";
+      voz.rate = 1;
+      voz.pitch = 1;
+      synth.speak(voz);
+    }
+
+    async function enviarAPreguntar(textoUsuario) {
+      const responseDiv = document.getElementById("response");
+      responseDiv.innerText = "🤖 Pensando...";
+
+      const body = {
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: "Respondé como un asistente llamado K.A.I., en español, con tono relajado pero útil." },
+          { role: "user", content: textoUsuario }
+        ]
+      };
+
+      try {
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+          },
+          body: JSON.stringify(body)
+        });
+
+        const data = await res.json();
+        const respuesta = data.choices[0].message.content;
+        responseDiv.innerText = "🗣️ " + respuesta;
+        hablar(respuesta);
+      } catch (err) {
+        responseDiv.innerText = "Error al conectar con K.A.I.";
+        console.error(err);
+      }
+    }
+
+    function escuchar() {
+      const reconocimiento = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      reconocimiento.lang = "es-ES";
+
+      reconocimiento.start();
+      reconocimiento.onresult = function(event) {
+        const texto = event.results[0][0].transcript;
+        enviarAPreguntar(texto);
+      };
+
+      reconocimiento.onerror = function(event) {
+        alert("Error al escuchar: " + event.error);
+      };
+    }
+  </script>
+</body>
+</html>
